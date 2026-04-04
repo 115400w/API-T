@@ -2,30 +2,32 @@ import requests
 import time
 import sys
 from colorama import init, Fore, Style
-
 init(autoreset=True)
 
 def print_header():
     print(Fore.WHITE + Style.BRIGHT + "=" * 80)
-    print(Fore.WHITE + Style.BRIGHT + "          API-T".center(80))
+    print(Fore.WHITE + Style.BRIGHT + " API-T".center(80))
     print(Fore.WHITE + Style.BRIGHT + "=" * 80)
     print()
 
 def get_http_method():
     print(Fore.WHITE + "Choose Method:")
-    print("   1. POST")
-    print("   2. GET")
-    print("   3. PUT")
-    print("   4. DELETE")
-    print("   5. PATCH")
-    print("   6. HEAD")
-    print("   7. OPTIONS")
-    
+    print(" 1. POST")
+    print(" 2. GET")
+    print(" 3. PUT")
+    print(" 4. DELETE")
+    print(" 5. PATCH")
+    print(" 6. HEAD")
+    print(" 7. OPTIONS")
+    print(" 8. PUT (form-data)")
+    print(" 9. POST (form-data)")
+    print("10. POST (raw text)")
+   
     while True:
-        choice = input(Fore.WHITE + "\nEnter choice (1-7): " + Style.RESET_ALL).strip()
+        choice = input(Fore.WHITE + "\nEnter choice (1-10): " + Style.RESET_ALL).strip()
         methods = {
-            '1': 'POST', '2': 'GET', '3': 'PUT', '4': 'DELETE',
-            '5': 'PATCH', '6': 'HEAD', '7': 'OPTIONS'
+            '1': 'POST', '2': 'GET', '3': 'PUT', '4': 'DELETE', '5': 'PATCH',
+            '6': 'HEAD', '7': 'OPTIONS', '8': 'PUT_FORM', '9': 'POST_FORM', '10': 'POST_RAW'
         }
         if choice in methods:
             return methods[choice]
@@ -39,17 +41,30 @@ def main():
         sys.exit(1)
 
     method = get_http_method()
+
     payload = None
-    if method in ['POST', 'PUT', 'PATCH']:
-        message = input(Fore.WHITE + "Enter payload: " + Style.RESET_ALL).strip()
+    files = None
+    data = None
+
+    if method in ['POST', 'PUT', 'PATCH', 'POST_FORM', 'PUT_FORM', 'POST_RAW']:
+        message = input(Fore.WHITE + "Enter payload (JSON, text, or leave blank): " + Style.RESET_ALL).strip()
+        
         if message:
-            try:
-                if message.startswith(('{', '[')):
-                    payload = eval(message) if not isinstance(message, dict) else message
-                else:
-                    payload = {"data": message}
-            except:
-                payload = {"message": message}
+            if method in ['POST_FORM', 'PUT_FORM']:
+                try:
+                    data = eval(message) if message.startswith('{') else {"data": message}
+                except:
+                    data = {"data": message}
+            elif method == 'POST_RAW':
+                data = message
+            else:
+                try:
+                    if message.startswith(('{', '[')):
+                        payload = eval(message)
+                    else:
+                        payload = {"data": message}
+                except:
+                    payload = {"message": message}
 
     try:
         times = int(input(Fore.WHITE + "Number of Times to Send it; " + Style.RESET_ALL))
@@ -60,36 +75,44 @@ def main():
         print(Fore.RED + "Incorrect Number." + Style.RESET_ALL)
         sys.exit(1)
 
-    delay_input = input(Fore.WHITE + "Delay between requests in seconds (press Enter for default 1.3s every 5 requests): " + Style.RESET_ALL).strip()
+    delay_input = input(Fore.WHITE + "Delay between requests in seconds (press Enter for default 1.3s every 5): " + Style.RESET_ALL).strip()
     manual_delay = float(delay_input) if delay_input else 0
 
-    custom_ua = input(Fore.WHITE + "uAgent (leave blank for 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36' ): " + Style.RESET_ALL).strip()
-    
+    custom_ua = input(Fore.WHITE + "uAgent (leave blank for default): " + Style.RESET_ALL).strip()
+   
     headers = {
         "User-Agent": custom_ua if custom_ua else "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
     }
 
-    print(Fore.GREEN + f"\nStarting {method} spam to: {api_url}" + Style.RESET_ALL)
+    print(Fore.GREEN + f"\nStarting {method.replace('_', ' ')} spam to: {api_url}" + Style.RESET_ALL)
     print(Fore.WHITE + "-" * 90 + Style.RESET_ALL)
 
     success_count = 0
+    session = requests.Session()
+    session.headers.update(headers)
 
     for i in range(1, times + 1):
         try:
             if method == 'GET':
-                response = requests.get(api_url, headers=headers, timeout=10)
+                response = session.get(api_url, timeout=10)
             elif method == 'POST':
-                response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                response = session.post(api_url, json=payload, timeout=10)
             elif method == 'PUT':
-                response = requests.put(api_url, json=payload, headers=headers, timeout=10)
+                response = session.put(api_url, json=payload, timeout=10)
             elif method == 'DELETE':
-                response = requests.delete(api_url, headers=headers, timeout=10)
+                response = session.delete(api_url, timeout=10)
             elif method == 'PATCH':
-                response = requests.patch(api_url, json=payload, headers=headers, timeout=10)
+                response = session.patch(api_url, json=payload, timeout=10)
             elif method == 'HEAD':
-                response = requests.head(api_url, headers=headers, timeout=10)
-            else:
-                response = requests.options(api_url, headers=headers, timeout=10)
+                response = session.head(api_url, timeout=10)
+            elif method == 'OPTIONS':
+                response = session.options(api_url, timeout=10)
+            elif method == 'POST_FORM':
+                response = session.post(api_url, data=data, timeout=10)
+            elif method == 'PUT_FORM':
+                response = session.put(api_url, data=data, timeout=10)
+            elif method == 'POST_RAW':
+                response = session.post(api_url, data=data, headers={**headers, "Content-Type": "text/plain"}, timeout=10)
 
             if response.status_code in [200, 201, 202, 204]:
                 status = f"{Fore.GREEN} | {Style.RESET_ALL}"
@@ -98,7 +121,6 @@ def main():
             else:
                 status = f"{Fore.RED} | {Style.RESET_ALL}"
                 msg = f"{Fore.RED}Failed{Style.RESET_ALL} | Status: {response.status_code}"
-
         except requests.exceptions.Timeout:
             status = f"{Fore.YELLOW}| ? |{Style.RESET_ALL}"
             msg = f"{Fore.YELLOW}Timeout{Style.RESET_ALL}"
@@ -110,15 +132,15 @@ def main():
             msg = f"{Fore.YELLOW}Error: {str(e)[:60]}{Style.RESET_ALL}"
 
         progress = f"{i}/{times}"
-        print(f"{status} {method:<6} | {api_url[:55]:<55} | {msg:<35} | {progress:>8}")
+        print(f"{status} {method.replace('_FORM','').replace('_RAW',''):<6} | {api_url[:55]:<55} | {msg:<35} | {progress:>8}")
+
         if manual_delay > 0:
             time.sleep(manual_delay)
-        else:
-            if i % 5 == 0 and i != times:
-                print(Fore.BLUE + f"   → Pausing 1.3s (per 5 requests)" + Style.RESET_ALL)
-                time.sleep(1.3)
+        elif i % 5 == 0 and i != times:
+            time.sleep(1.3)
+
     print(Fore.WHITE + "\n" + "=" * 90 + Style.RESET_ALL)
-    print(Fore.GREEN + f"Complete. {success_count}/{times} | Method: {method}" + Style.RESET_ALL)
+    print(Fore.GREEN + f"Complete. {success_count}/{times} | Method: {method.replace('_', ' ')}" + Style.RESET_ALL)
     print(Fore.WHITE + "=" * 90 + Style.RESET_ALL)
 
 if __name__ == "__main__":
