@@ -7,7 +7,8 @@ Send multiple HTTP requests to test APIs.
 
 - Default User Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
 
-<img width="884" height="269" alt="image" src="https://github.com/user-attachments/assets/705c0f04-61af-4e10-bd19-683d69a9f7d5" />
+<img width="891" height="120" alt="image" src="https://github.com/user-attachments/assets/4e91d308-1405-49fd-bd41-a5f3dd2e4a71" />
+
 
 --------------------------------------------------------------
 
