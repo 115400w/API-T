@@ -9,6 +9,15 @@ Send multiple HTTP requests to test APIs.
 
 <img width="891" height="120" alt="image" src="https://github.com/user-attachments/assets/4e91d308-1405-49fd-bd41-a5f3dd2e4a71" />
 
+## How To Run:
+
+**Extract API-T-main.zip**,
+
+**Open cmd.exe**,
+**cd downloads**,
+**cd API-T-main**,
+**cd clients\python**,
+**python main.py**
 
 --------------------------------------------------------------
 
@@ -45,4 +54,8 @@ Example from A Script:
         "type": "giveaway",
         "username": username
     }``
+
+
+
+
     
